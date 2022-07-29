@@ -298,20 +298,3 @@ The Manifest file is named with monotonic incremental integers, e.g.,
 Manifest files can only be added or removed.
 When restarting, opencache list all of the manifest file and use the last valid one(by checking the
 checksum).
-
-
-# Memory layout
-
-Keys and Access data are stored in memory for quick access.
-Chunks can be optionally cached in memory but it should be OK there is no in-memory chunk-cache.
-
-Keys in memory is just a HashMap: `ObjectMap`.
-
-Key Access data is fed to key-eviction-algorithm.
-Chunk Access data is fed to chunk-eviction-algorithm.
-
-When cache server restarts:
-All of the keys are loaded into memory.
-All Access data are replayed by the two eviction algorithm implementations.
-
-
