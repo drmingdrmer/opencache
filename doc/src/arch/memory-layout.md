@@ -1,135 +1,103 @@
 # Memory layout
 
-KeyStore resides in memory for quick access: `ObjectIndex`.
-Access data resides in memory too and is part of the `CacheReplacement`(one of the famous  `CacheReplacement` is `LRU`).
-Chunks can be optionally cached in memory but it should be OK there is no in-memory chunk-cache.
+`CacheReplacement` policy and object index resides in memory as one single data structure `ObjectIndex`. It is used to lookup object by key and evict object.
+(one of the famous  `CacheReplacement` is `LRU`).
 
-There are two `CacheReplacement` in opencache:
-`ObjectReplacement` tracks object level access history.
-`ChunkReplacement` tracks chunk level access history.
+In opencache, `ObjectIndex` is the only in-memory data.
 
 When cache server restarts:
-All of the keys are loaded into memory.
-All Access data are replayed by the two `CacheReplacement` implementation.
+Object keys are loaded into memory from all ChunkIndex, 
+And all Access log are replayed by the `ObjectIndex`.
 
 
 
-## Cache replacement algorithm
+## ObjectIndex
 
 
-`CacheReplacement`: cache replacement algorithm, e.g., `LRU`, `2Q`, `LIRS`.
+`ObjectIndex` has a `map` for locating an `entry` in it by entry key.
+Cache entries are organized with one or more double linked list(`CacheReplacement`) to maintain access
+history thus to decide which node to evict. 
 
-`CacheReplacement` internally has a `map` for locating a node in it by a user
-defined node key and one or more double linked list to maintain access history
-thus to decide which node to evict.
+The `map` in `ObjectIndex` is an index of cached object and non-cached objects(evicted but not cleand).
+The value(cache entry) of `ObjectIndex` map is mainly the object metadata.
 
-- Node key is the identifier of cached item.
-  In this project is either the `Key` of an object, or a `ChunkId`.
+Object meta includes:
+- Chunk file it resides on disk.
+- Meta data such as offset, size
 
-- Node is exactly the node in a linked list. A `Node` may have various properties
-    in different replacement algorithms.
+Entry key is the unique identifier of cached item.
+In this project it is just the object key.
 
-Every `Object` or `Chunk` has a corresponding **node** present in a replacement
-algorithm.
+Every cached `Object` has a corresponding **entry** in
+`CacheReplacement`.
 **But not vice versa**.
 
-- E.g., for `LRU` of `Chunk`, it is a one-to-one mapping between lru-node and `Chunk`.
-  Every `Chunk` has a lru-node.
-  A `Chunk` that does not have a corresponding lru-node must have been removed or be going to be removed.
+- E.g., for `LRU`, it is a one-to-one mapping between lru-entry and an object:
+  A `Object` that does not have a corresponding lru-entry must have been removed or be going to be removed.
 
-- For `2Q` or `LIRS`, there may be a node that has no corresponding `Chunk`.
-    Such a node represents an **accessed** but **NOT cached** `Chunk`, or an
-    evicted but not yet cleaned `Chunk`.
+- For `2Q` or `LIRS`, there may be an entry that has no corresponding `Object`.
+    Such an entry represents an **accessed** but **NOT cached** `Object`, or an
+    evicted but not yet cleaned `Object`.
 
 
 ```bob
+     Bucket
 
-          .-------------------.             .------------.
-          | ObjectReplacement |             | Keys store |
-          |                   |             |            |
-          | Node-1 <----------|-------------|-- key-1    |
-          | Node-2 <----------|-------------|-- key-2    |
-          | ..                |             |   ..       |
-          | Node-i            |             |            |
-          |                   |             |            |
-          '-------------------'             '------------'
+     .--------------.             .-------.
+     | Replacement  |             |       |
+     |              |             |       |
+     | Entry-1 <----|-------------| key-1 |
+     | Entry-2 <----|-------------| key-2 |
+     | ..           |             |   ..  |
+     | Entry-i      |             |       |
+     '--------------'             '-------'
 
 ```
 
 ## Capacity
 
-The capacity of a cache system is the max **size** of all the content it caches.
-E.g., for `LRU`, the capacity is the max number of `Node` it can have.
+The capacity of a cache system is the max **size** of all the content it can
+cache.
+E.g., for `LRU`, the capacity is the max number of entries it can have.
 
-In our project, the capacity is the sum of all cached chunks: ∑chunk_sizeᵢ
-
-
-## In memory data structures
-
-`ObjectIndex` is:
-- the in-memory index of cached keys and non-cached keys(evicted but not cleand).
-- It is also the cache replacement algorithm implementation for keys, since a replacement
-algorithm usually is a `hashmap` whose `value` are linked list node.
-
-
-`ChunkIndex` is:
-- the in-memory index of cached chunks and non-cached chunks(evicted but not cleand).
-- It is also the cache replacement algorithm implementation for chunks.
-  `ChunkIndex` is a `hashset` whose `key` are linked list node.
-
-
-`ChunkLookup` is a lookup table to locate the file for a chunk by `ChunkId`.
-It is a list of chunk file path and first chunk id in the chunk file, sorted by
-first-chunk-id.
-To find the chunk file path by `ChunkId`, run a binary search on `ChunkLookup`.
-Thus `ChunkLookup` is very similar to a big root node in a btree.
+In our project, the capacity is the sum of all cached objects: ∑objectᵢ.size
 
 
 ## Read an object
 
 The working flow for a `read` operation includes:
-- Find the object by key in `ObjectIndex`, extract `ChunkId`s by the
-    range of bytes to read.
 
-- Filter out `ChunkId` that does not exist.
+- Locate the Bucket by hash value of object key.
 
-- Load bytes from `ChunkStore` and respond it to client.
+- Find the chunk file, size and offset in `ObjectIndex`,
+  if it does not exist, or it exists but is marked as evcited, return 404.
 
-- Record access log.
+    This is also an access to the `CacheReplacement` at the same time,
+    thus it may trigger an eviction for an `Object`.
+    If it does, remove it from `ObjectStore`.
+
+- Load bytes from `ObjectStore` and respond it to client.
+
+- Append this request to the access log.
 
 
 ```bob
   .--------.
   | client |
   '--------'
------>|                          .-------------.
-req   | lookup(key)              | ObjectIndex |     In memory
-      |------------------------->|             |
-      |                          | key_1=meta  |
-      |      key meta(chunk-ids) | key_2=meta  |
-      |<-------------------------| ..          |
-      |                          | key_i=ø     |
-      |                          '-------------'
-      |
+----->|
+req   |
       |                          .---------------.
-      | find non-null chunk-ids  | ChunkIndex    |   In memory
+      | find chunk-id            | ObjectIndex   |   In memory
       |------------------------->|               |
       |                          | chunk_id_1=() |
-      |                chunk-ids | chunk_id_2=() |
+      |                 chunk-id | chunk_id_2=() |
       |<-------------------------| ..            |
       |                          | chunk_id_i=ø  |
       |                          '---------------'
       |
-      |                          .----------------.
-      | get chunk file paths     | ChunkLookup    |  In memory
-      |------------------------->|                |
-      |                          | chunk_id_i=fn1 |
-      | file paths               | ..             |
-      |<-------------------------| chunk_id_j=fn2 |
-      |                          | ..             |
-      |                          '----------------'
       |
-      | read chunks              .------------.
+      | read chunk               .------------.
       |------------------------->| ChunkStore |      On disk
       |                          |            |
       |                          | chunk1     |
@@ -140,6 +108,66 @@ req   | lookup(key)              | ObjectIndex |     In memory
       |
       | append access log        .-------------.
       |------------------------->| AccessStore |      On disk
+      |                          |             |
+      |                          '-------------'
+      v
+      time
+
+```
+
+
+## Write an object
+
+- Locate the `Bucket` for this object by the hash value of the key.
+
+- Write the object to `ObjectStore`, by appending the object to the active chunk file
+    and appending a key record to `ChunkIndex` file, no need to fsync
+
+- Writing an object also implies a read on it.
+  Thus the last step of writing an object is to update the `CacheReplacement`.
+
+
+```bob
+  .--------.
+  | client |
+  '--------'
+----->|
+req   |
+      |                       .--------------------.
+      |                       |   ObjectStore      |
+      |                       |                    |
+      | write object          |  .--------------.  |
+      |-----------------------|->| Active Chunk |  |   On disk
+      |                       |  |              |  |
+      |                       |  | object1      |  |
+      |                       |  | object2      |  |
+      |                       |  | ..           |  |
+      |                       |  '--------------'  |
+      |                       |                    |
+      |                       |  .--------------.  |
+      |                       |  | Active       |  |   On disk
+      |                       |  | ChunkIndex   |  |
+      |                       |  |              |  |
+      |                       |  | key1         |  |
+      |                       |  | key2         |  |
+      |                       |  '--------------'  |
+      |                       '--------------------'
+      |
+      |                          .---------------.
+      | Add object key           | ChunkIndex    |     In memory
+      |------------------------->|               |
+      |                          | chunk_id_1=() |
+      |                          | chunk_id_2=() |
+      |                          | ..            |
+      |                          | chunk_id_i=ø  |
+      |                          '---------------'
+      |
+      |
+<-----|
+  resp|
+      |
+      | append access log        .-------------.
+      |------------------------->| AccessStore |       On disk
       |                          |             |
       |                          '-------------'
       v

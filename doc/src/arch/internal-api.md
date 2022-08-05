@@ -12,18 +12,6 @@ trait ChunkStorage {
 }
 ```
 
-## Object API
-
-ObjectStorage provides object access:
-
-```rust
-trait ObjectStorage {
-    fn add(&mut self, key: String, size, meta, prefered_chunck_size);
-    fn remove(&mut self, key)
-    fn access(&mut self, key)
-}
-```
-
 ## CacheServer API
 
 Server level API
