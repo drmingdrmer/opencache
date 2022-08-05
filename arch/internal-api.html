@@ -76,7 +76,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../arch/opencache.html"><strong aria-hidden="true">1.</strong> Opencache</a></li><li class="chapter-item expanded "><a href="../arch/storage-model.html"><strong aria-hidden="true">2.</strong> Storage model</a></li><li class="chapter-item expanded "><a href="../arch/cache-replacement.html"><strong aria-hidden="true">3.</strong> Cache replacement</a></li><li class="chapter-item expanded "><a href="../arch/internal-api.html" class="active"><strong aria-hidden="true">4.</strong> Internal API</a></li><li class="chapter-item expanded "><a href="../arch/client.html"><strong aria-hidden="true">5.</strong> Client</a></li><li class="chapter-item expanded "><a href="../caveat.html"><strong aria-hidden="true">6.</strong> Caveat</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../arch/opencache.html"><strong aria-hidden="true">1.</strong> Opencache</a></li><li class="chapter-item expanded "><a href="../arch/storage-model.html"><strong aria-hidden="true">2.</strong> Storage model</a></li><li class="chapter-item expanded "><a href="../arch/cache-replacement.html"><strong aria-hidden="true">3.</strong> Cache replacement</a></li><li class="chapter-item expanded "><a href="../arch/memory-layout.html"><strong aria-hidden="true">4.</strong> Memory layout</a></li><li class="chapter-item expanded "><a href="../arch/internal-api.html" class="active"><strong aria-hidden="true">5.</strong> Internal API</a></li><li class="chapter-item expanded "><a href="../arch/client.html"><strong aria-hidden="true">6.</strong> Client</a></li><li class="chapter-item expanded "><a href="../caveat.html"><strong aria-hidden="true">7.</strong> Caveat</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -149,18 +149,6 @@
 }
 <span class="boring">}
 </span></code></pre></pre>
-<h2 id="object-api"><a class="header" href="#object-api">Object API</a></h2>
-<p>ObjectStorage provides object access:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>trait ObjectStorage {
-    fn add(&amp;mut self, key: String, size, meta, prefered_chunck_size);
-    fn remove(&amp;mut self, key)
-    fn access(&amp;mut self, key)
-}
-<span class="boring">}
-</span></code></pre></pre>
 <h2 id="cacheserver-api"><a class="header" href="#cacheserver-api">CacheServer API</a></h2>
 <p>Server level API</p>
 <pre><pre class="playground"><code class="language-rust">
@@ -181,7 +169,7 @@
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../arch/cache-replacement.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../arch/memory-layout.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                             <a rel="next" href="../arch/client.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
@@ -193,7 +181,7 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../arch/cache-replacement.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../arch/memory-layout.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                     <a rel="next" href="../arch/client.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">

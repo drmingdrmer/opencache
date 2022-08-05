@@ -1,0 +1,253 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Memory layout - opencache</title>
+        <!-- Custom HTML head -->
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="The opencache document">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../doc/src/custom.css">
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../arch/opencache.html"><strong aria-hidden="true">1.</strong> Opencache</a></li><li class="chapter-item expanded "><a href="../arch/storage-model.html"><strong aria-hidden="true">2.</strong> Storage model</a></li><li class="chapter-item expanded "><a href="../arch/cache-replacement.html"><strong aria-hidden="true">3.</strong> Cache replacement</a></li><li class="chapter-item expanded "><a href="../arch/memory-layout.html" class="active"><strong aria-hidden="true">4.</strong> Memory layout</a></li><li class="chapter-item expanded "><a href="../arch/internal-api.html"><strong aria-hidden="true">5.</strong> Internal API</a></li><li class="chapter-item expanded "><a href="../arch/client.html"><strong aria-hidden="true">6.</strong> Client</a></li><li class="chapter-item expanded "><a href="../caveat.html"><strong aria-hidden="true">7.</strong> Caveat</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">opencache</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="memory-layout"><a class="header" href="#memory-layout">Memory layout</a></h1>
+<p><code>CacheReplacement</code> policy and object index resides in memory as one single data structure <code>ObjectIndex</code>. It is used to lookup object by key and evict object.
+(one of the famous  <code>CacheReplacement</code> is <code>LRU</code>).</p>
+<p>In opencache, <code>ObjectIndex</code> is the only in-memory data.</p>
+<p>When cache server restarts:
+Object keys are loaded into memory from all ChunkIndex, 
+And all Access log are replayed by the <code>ObjectIndex</code>.</p>
+<h2 id="objectindex"><a class="header" href="#objectindex">ObjectIndex</a></h2>
+<p><code>ObjectIndex</code> has a <code>map</code> for locating an <code>entry</code> in it by entry key.
+Cache entries are organized with one or more double linked list(<code>CacheReplacement</code>) to maintain access
+history thus to decide which node to evict. </p>
+<p>The <code>map</code> in <code>ObjectIndex</code> is an index of cached object and non-cached objects(evicted but not cleand).
+The value(cache entry) of <code>ObjectIndex</code> map is mainly the object metadata.</p>
+<p>Object meta includes:</p>
+<ul>
+<li>Chunk file it resides on disk.</li>
+<li>Meta data such as offset, size</li>
+</ul>
+<p>Entry key is the unique identifier of cached item.
+In this project it is just the object key.</p>
+<p>Every cached <code>Object</code> has a corresponding <strong>entry</strong> in
+<code>CacheReplacement</code>.
+<strong>But not vice versa</strong>.</p>
+<ul>
+<li>
+<p>E.g., for <code>LRU</code>, it is a one-to-one mapping between lru-entry and an object:
+A <code>Object</code> that does not have a corresponding lru-entry must have been removed or be going to be removed.</p>
+</li>
+<li>
+<p>For <code>2Q</code> or <code>LIRS</code>, there may be an entry that has no corresponding <code>Object</code>.
+Such an entry represents an <strong>accessed</strong> but <strong>NOT cached</strong> <code>Object</code>, or an
+evicted but not yet cleaned <code>Object</code>.</p>
+</li>
+</ul>
+<div style='width:100%; height:176px;'><style type="text/css">svg { width: 100% !important; }</style><svg class="bob" font-family="arial" font-size="14" height="176" width="344" xmlns="http://www.w3.org/2000/svg"><defs><marker id="triangle" markerHeight="8" markerWidth="8" orient="auto" refX="4" refY="2" viewBox="0 0 8 4"><polygon class="fg_fill" points="0,0 0,4 8,2 0,0"/></marker><marker id="clear_triangle" markerHeight="10" markerWidth="10" orient="auto" refX="1" refY="7" viewBox="0 0 20 14"><polygon class="bg_fill" points="2,2 2,12 18,7 2,2"/></marker><marker id="circle" markerHeight="5" markerWidth="5" orient="auto" refX="10" refY="10" viewBox="0 0 20 20"><circle class="fg_fill" cx="10" cy="10" r="8"/></marker><marker id="square" markerHeight="5" markerWidth="5" orient="auto" refX="10" refY="10" viewBox="0 0 20 20"><rect class="fg_fill" height="20" width="20" x="0" y="0"/></marker><marker id="open_circle" markerHeight="10" markerWidth="10" orient="auto" refX="10" refY="10" viewBox="0 0 20 20"><circle class="bg_fill" cx="10" cy="10" r="4"/></marker><marker id="big_open_circle" markerHeight="20" markerWidth="20" orient="auto" refX="20" refY="20" viewBox="0 0 40 40"><circle class="bg_fill" cx="20" cy="20" r="6"/></marker></defs><style type="text/css">rect.backdrop {    fill: transparent;}text{    fill: var(--fg);}circle {    fill: none;    stroke: var(--fg);    stroke-width: 2;}line {    stroke: var(--fg);    stroke-width: 2;    stroke-opacity: 1;    fill-opacity: 1;    stroke-linecap: round;    stroke-linejoin: miter;}path {    fill: none;    stroke: var(--fg);    stroke-width: 2;    stroke-opacity: 1;    fill-opacity: 1;    stroke-linecap: round;    stroke-linejoin: miter;}line.dashed {    stroke-dasharray: 5;}.fg_fill {    fill: var(--fg);}.bg_fill {    fill: transparent;    stroke: var(--fg);    stroke-width: 2;}tspan.head{    fill: none;    stroke: none;}    </style><rect class="backdrop" height="176" width="344" x="0" y="0"/><g><line x1="44" x2="44" y1="44" y2="148"/><path d="M 44 148 A 4 4 0 0 0 48 152"/><path d="M 48 40 A 4 4 0 0 0 44 44"/></g><g><line x1="48" x2="160" y1="40" y2="40"/><path d="M 164 44 A 4 4 0 0 0 160 40"/></g><g><line x1="48" x2="160" y1="152" y2="152"/><path d="M 160 152 A 4 4 0 0 0 164 148"/></g><g><line marker-end="url(#triangle)" x1="128" x2="124" y1="88" y2="88"/><line x1="128" x2="164" y1="88" y2="88"/><line x1="164" x2="276" y1="88" y2="88"/></g><g><line marker-end="url(#triangle)" x1="128" x2="124" y1="104" y2="104"/><line x1="128" x2="164" y1="104" y2="104"/><line x1="164" x2="276" y1="104" y2="104"/></g><g><line x1="164" x2="164" y1="44" y2="148"/></g><g><line x1="276" x2="276" y1="44" y2="148"/><path d="M 276 148 A 4 4 0 0 0 280 152"/><path d="M 280 40 A 4 4 0 0 0 276 44"/></g><g><line x1="280" x2="336" y1="40" y2="40"/><path d="M 340 44 A 4 4 0 0 0 336 40"/></g><g><line x1="280" x2="336" y1="152" y2="152"/><path d="M 336 152 A 4 4 0 0 0 340 148"/></g><g><line x1="340" x2="340" y1="44" y2="148"/></g><g><text x="41" y="12">Bucket</text></g><g><text x="57" y="60">Replacement</text></g><g><text x="57" y="92">Entry-1</text></g><g><text x="57" y="108">Entry-2</text></g><g><text x="57" y="124">..</text></g><g><text x="57" y="140">Entry-i</text></g><g><text x="289" y="92">key-1</text></g><g><text x="289" y="108">key-2</text></g><g><text x="305" y="124">..</text></g></svg></div>
+<h2 id="capacity"><a class="header" href="#capacity">Capacity</a></h2>
+<p>The capacity of a cache system is the max <strong>size</strong> of all the content it can
+cache.
+E.g., for <code>LRU</code>, the capacity is the max number of entries it can have.</p>
+<p>In our project, the capacity is the sum of all cached objects: ∑objectᵢ.size</p>
+<h2 id="read-an-object"><a class="header" href="#read-an-object">Read an object</a></h2>
+<p>The working flow for a <code>read</code> operation includes:</p>
+<ul>
+<li>
+<p>Locate the Bucket by hash value of object key.</p>
+</li>
+<li>
+<p>Find the chunk file, size and offset in <code>ObjectIndex</code>,
+if it does not exist, or it exists but is marked as evcited, return 404.</p>
+<p>This is also an access to the <code>CacheReplacement</code> at the same time,
+thus it may trigger an eviction for an <code>Object</code>.
+If it does, remove it from <code>ObjectStore</code>.</p>
+</li>
+<li>
+<p>Load bytes from <code>ObjectStore</code> and respond it to client.</p>
+</li>
+<li>
+<p>Append this request to the access log.</p>
+</li>
+</ul>
+<div style='width:100%; height:496px;'><style type="text/css">svg { width: 100% !important; }</style><svg class="bob" font-family="arial" font-size="14" height="496" width="496" xmlns="http://www.w3.org/2000/svg"><defs><marker id="triangle" markerHeight="8" markerWidth="8" orient="auto" refX="4" refY="2" viewBox="0 0 8 4"><polygon class="fg_fill" points="0,0 0,4 8,2 0,0"/></marker><marker id="clear_triangle" markerHeight="10" markerWidth="10" orient="auto" refX="1" refY="7" viewBox="0 0 20 14"><polygon class="bg_fill" points="2,2 2,12 18,7 2,2"/></marker><marker id="circle" markerHeight="5" markerWidth="5" orient="auto" refX="10" refY="10" viewBox="0 0 20 20"><circle class="fg_fill" cx="10" cy="10" r="8"/></marker><marker id="square" markerHeight="5" markerWidth="5" orient="auto" refX="10" refY="10" viewBox="0 0 20 20"><rect class="fg_fill" height="20" width="20" x="0" y="0"/></marker><marker id="open_circle" markerHeight="10" markerWidth="10" orient="auto" refX="10" refY="10" viewBox="0 0 20 20"><circle class="bg_fill" cx="10" cy="10" r="4"/></marker><marker id="big_open_circle" markerHeight="20" markerWidth="20" orient="auto" refX="20" refY="20" viewBox="0 0 40 40"><circle class="bg_fill" cx="20" cy="20" r="6"/></marker></defs><style type="text/css">rect.backdrop {    fill: transparent;}text{    fill: var(--fg);}circle {    fill: none;    stroke: var(--fg);    stroke-width: 2;}line {    stroke: var(--fg);    stroke-width: 2;    stroke-opacity: 1;    fill-opacity: 1;    stroke-linecap: round;    stroke-linejoin: miter;}path {    fill: none;    stroke: var(--fg);    stroke-width: 2;    stroke-opacity: 1;    fill-opacity: 1;    stroke-linecap: round;    stroke-linejoin: miter;}line.dashed {    stroke-dasharray: 5;}.fg_fill {    fill: var(--fg);}.bg_fill {    fill: transparent;    stroke: var(--fg);    stroke-width: 2;}tspan.head{    fill: none;    stroke: none;}    </style><rect class="backdrop" height="496" width="496" x="0" y="0"/><g><line marker-end="url(#triangle)" x1="0" x2="44" y1="56" y2="56"/></g><g><line marker-end="url(#triangle)" x1="8" x2="4" y1="312" y2="312"/><line x1="8" x2="52" y1="312" y2="312"/></g><g><line x1="20" x2="20" y1="12" y2="36"/><path d="M 20 36 A 4 4 0 0 0 24 40"/><path d="M 24 8 A 4 4 0 0 0 20 12"/></g><g><line x1="24" x2="88" y1="8" y2="8"/><path d="M 92 12 A 4 4 0 0 0 88 8"/></g><g><line x1="24" x2="88" y1="40" y2="40"/><path d="M 88 40 A 4 4 0 0 0 92 36"/></g><g><line marker-end="url(#triangle)" x1="52" x2="52" y1="48" y2="460"/></g><g><line marker-end="url(#triangle)" x1="52" x2="260" y1="120" y2="120"/></g><g><line marker-end="url(#triangle)" x1="52" x2="260" y1="264" y2="264"/></g><g><line marker-end="url(#triangle)" x1="52" x2="260" y1="408" y2="408"/></g><g><line marker-end="url(#triangle)" x1="64" x2="60" y1="168" y2="168"/><line x1="64" x2="268" y1="168" y2="168"/></g><g><line x1="92" x2="92" y1="12" y2="36"/></g><g><line x1="268" x2="268" y1="92" y2="196"/><path d="M 268 196 A 4 4 0 0 0 272 200"/><path d="M 272 88 A 4 4 0 0 0 268 92"/></g><g><line x1="268" x2="268" y1="252" y2="356"/><path d="M 268 356 A 4 4 0 0 0 272 360"/><path d="M 272 248 A 4 4 0 0 0 268 252"/></g><g><line x1="268" x2="268" y1="396" y2="436"/><path d="M 268 436 A 4 4 0 0 0 272 440"/><path d="M 272 392 A 4 4 0 0 0 268 396"/></g><g><line x1="272" x2="392" y1="88" y2="88"/><path d="M 396 92 A 4 4 0 0 0 392 88"/></g><g><line x1="272" x2="392" y1="200" y2="200"/><path d="M 392 200 A 4 4 0 0 0 396 196"/></g><g><line x1="272" x2="368" y1="248" y2="248"/><path d="M 372 252 A 4 4 0 0 0 368 248"/></g><g><line x1="272" x2="368" y1="360" y2="360"/><path d="M 368 360 A 4 4 0 0 0 372 356"/></g><g><line x1="272" x2="376" y1="392" y2="392"/><path d="M 380 396 A 4 4 0 0 0 376 392"/></g><g><line x1="272" x2="376" y1="440" y2="440"/><path d="M 376 440 A 4 4 0 0 0 380 436"/></g><g><line x1="372" x2="372" y1="252" y2="356"/></g><g><line x1="380" x2="380" y1="396" y2="436"/></g><g><line x1="396" x2="396" y1="92" y2="196"/></g><g><path d="M 376 128 A 16 16 0 0 0 376 144"/><path d="M 376 144 A 16 16 0 0 0 376 128"/><path d="M 376 144 A 16 16 0 0 0 376 160"/><path d="M 376 160 A 16 16 0 0 0 376 144"/></g><g><text x="1" y="76">req</text></g><g><text x="17" y="332">resp</text></g><g><text x="33" y="28">client</text></g><g><text x="49" y="476">time</text></g><g><text x="65" y="108">find</text></g><g><text x="65" y="252">read</text></g><g><text x="65" y="396">append</text></g><g><text x="105" y="108">chunk-id</text></g><g><text x="105" y="252">chunk</text></g><g><text x="121" y="396">access</text></g><g><text x="177" y="396">log</text></g><g><text x="193" y="156">chunk-id</text></g><g><text x="281" y="108">ObjectIndex</text></g><g><text x="281" y="140">chunk_id_1=</text></g><g><text x="281" y="156">chunk_id_2=</text></g><g><text x="281" y="172">..</text></g><g><text x="281" y="188">chunk_id_i=ø</text></g><g><text x="281" y="268">ChunkStore</text></g><g><text x="281" y="300">chunk1</text></g><g><text x="281" y="316">chunk2</text></g><g><text x="281" y="332">..</text></g><g><text x="281" y="348">chunki</text></g><g><text x="281" y="412">AccessStore</text></g><g><text x="425" y="108">In</text></g><g><text x="425" y="268">On</text></g><g><text x="433" y="412">On</text></g><g><text x="449" y="108">memory</text></g><g><text x="449" y="268">disk</text></g><g><text x="457" y="412">disk</text></g></svg></div>
+<h2 id="write-an-object"><a class="header" href="#write-an-object">Write an object</a></h2>
+<ul>
+<li>
+<p>Locate the <code>Bucket</code> for this object by the hash value of the key.</p>
+</li>
+<li>
+<p>Write the object to <code>ObjectStore</code>, by appending the object to the active chunk file
+and appending a key record to <code>ChunkIndex</code> file, no need to fsync</p>
+</li>
+<li>
+<p>Writing an object also implies a read on it.
+Thus the last step of writing an object is to update the <code>CacheReplacement</code>.</p>
+</li>
+</ul>
+<div style='width:100%; height:720px;'><style type="text/css">svg { width: 100% !important; }</style><svg class="bob" font-family="arial" font-size="14" height="720" width="512" xmlns="http://www.w3.org/2000/svg"><defs><marker id="triangle" markerHeight="8" markerWidth="8" orient="auto" refX="4" refY="2" viewBox="0 0 8 4"><polygon class="fg_fill" points="0,0 0,4 8,2 0,0"/></marker><marker id="clear_triangle" markerHeight="10" markerWidth="10" orient="auto" refX="1" refY="7" viewBox="0 0 20 14"><polygon class="bg_fill" points="2,2 2,12 18,7 2,2"/></marker><marker id="circle" markerHeight="5" markerWidth="5" orient="auto" refX="10" refY="10" viewBox="0 0 20 20"><circle class="fg_fill" cx="10" cy="10" r="8"/></marker><marker id="square" markerHeight="5" markerWidth="5" orient="auto" refX="10" refY="10" viewBox="0 0 20 20"><rect class="fg_fill" height="20" width="20" x="0" y="0"/></marker><marker id="open_circle" markerHeight="10" markerWidth="10" orient="auto" refX="10" refY="10" viewBox="0 0 20 20"><circle class="bg_fill" cx="10" cy="10" r="4"/></marker><marker id="big_open_circle" markerHeight="20" markerWidth="20" orient="auto" refX="20" refY="20" viewBox="0 0 40 40"><circle class="bg_fill" cx="20" cy="20" r="6"/></marker></defs><style type="text/css">rect.backdrop {    fill: transparent;}text{    fill: var(--fg);}circle {    fill: none;    stroke: var(--fg);    stroke-width: 2;}line {    stroke: var(--fg);    stroke-width: 2;    stroke-opacity: 1;    fill-opacity: 1;    stroke-linecap: round;    stroke-linejoin: miter;}path {    fill: none;    stroke: var(--fg);    stroke-width: 2;    stroke-opacity: 1;    fill-opacity: 1;    stroke-linecap: round;    stroke-linejoin: miter;}line.dashed {    stroke-dasharray: 5;}.fg_fill {    fill: var(--fg);}.bg_fill {    fill: transparent;    stroke: var(--fg);    stroke-width: 2;}tspan.head{    fill: none;    stroke: none;}    </style><rect class="backdrop" height="720" width="512" x="0" y="0"/><g><line marker-end="url(#triangle)" x1="0" x2="44" y1="56" y2="56"/></g><g><line marker-end="url(#triangle)" x1="8" x2="4" y1="568" y2="568"/><line x1="8" x2="52" y1="568" y2="568"/></g><g><line x1="20" x2="20" y1="12" y2="36"/><path d="M 20 36 A 4 4 0 0 0 24 40"/><path d="M 24 8 A 4 4 0 0 0 20 12"/></g><g><line x1="24" x2="88" y1="8" y2="8"/><path d="M 92 12 A 4 4 0 0 0 88 8"/></g><g><line x1="24" x2="88" y1="40" y2="40"/><path d="M 88 40 A 4 4 0 0 0 92 36"/></g><g><line marker-end="url(#triangle)" x1="52" x2="52" y1="48" y2="684"/></g><g><line x1="52" x2="244" y1="152" y2="152"/><line marker-end="url(#triangle)" x1="244" x2="260" y1="152" y2="152"/></g><g><line marker-end="url(#triangle)" x1="52" x2="260" y1="440" y2="440"/></g><g><line marker-end="url(#triangle)" x1="52" x2="260" y1="632" y2="632"/></g><g><line x1="92" x2="92" y1="12" y2="36"/></g><g><line x1="244" x2="244" y1="92" y2="372"/><path d="M 244 372 A 4 4 0 0 0 248 376"/><path d="M 248 88 A 4 4 0 0 0 244 92"/></g><g><line x1="248" x2="408" y1="88" y2="88"/><path d="M 412 92 A 4 4 0 0 0 408 88"/></g><g><line x1="248" x2="408" y1="376" y2="376"/><path d="M 408 376 A 4 4 0 0 0 412 372"/></g><g><line x1="268" x2="268" y1="140" y2="228"/><path d="M 268 228 A 4 4 0 0 0 272 232"/><path d="M 272 136 A 4 4 0 0 0 268 140"/></g><g><line x1="268" x2="268" y1="268" y2="356"/><path d="M 268 356 A 4 4 0 0 0 272 360"/><path d="M 272 264 A 4 4 0 0 0 268 268"/></g><g><line x1="268" x2="268" y1="412" y2="516"/><path d="M 268 516 A 4 4 0 0 0 272 520"/><path d="M 272 408 A 4 4 0 0 0 268 412"/></g><g><line x1="268" x2="268" y1="620" y2="660"/><path d="M 268 660 A 4 4 0 0 0 272 664"/><path d="M 272 616 A 4 4 0 0 0 268 620"/></g><g><line x1="272" x2="384" y1="136" y2="136"/><path d="M 388 140 A 4 4 0 0 0 384 136"/></g><g><line x1="272" x2="384" y1="232" y2="232"/><path d="M 384 232 A 4 4 0 0 0 388 228"/></g><g><line x1="272" x2="384" y1="264" y2="264"/><path d="M 388 268 A 4 4 0 0 0 384 264"/></g><g><line x1="272" x2="384" y1="360" y2="360"/><path d="M 384 360 A 4 4 0 0 0 388 356"/></g><g><line x1="272" x2="392" y1="408" y2="408"/><path d="M 396 412 A 4 4 0 0 0 392 408"/></g><g><line x1="272" x2="392" y1="520" y2="520"/><path d="M 392 520 A 4 4 0 0 0 396 516"/></g><g><line x1="272" x2="376" y1="616" y2="616"/><path d="M 380 620 A 4 4 0 0 0 376 616"/></g><g><line x1="272" x2="376" y1="664" y2="664"/><path d="M 376 664 A 4 4 0 0 0 380 660"/></g><g><line x1="380" x2="380" y1="620" y2="660"/></g><g><line x1="388" x2="388" y1="140" y2="228"/></g><g><line x1="388" x2="388" y1="268" y2="356"/></g><g><line x1="396" x2="396" y1="412" y2="516"/></g><g><line x1="412" x2="412" y1="92" y2="372"/></g><g><path d="M 376 448 A 16 16 0 0 0 376 464"/><path d="M 376 464 A 16 16 0 0 0 376 448"/><path d="M 376 464 A 16 16 0 0 0 376 480"/><path d="M 376 480 A 16 16 0 0 0 376 464"/></g><g><text x="1" y="76">req</text></g><g><text x="17" y="588">resp</text></g><g><text x="33" y="28">client</text></g><g><text x="49" y="700">time</text></g><g><text x="65" y="140">write</text></g><g><text x="65" y="428">Add</text></g><g><text x="65" y="620">append</text></g><g><text x="97" y="428">object</text></g><g><text x="113" y="140">object</text></g><g><text x="121" y="620">access</text></g><g><text x="153" y="428">key</text></g><g><text x="177" y="620">log</text></g><g><text x="273" y="108">ObjectStore</text></g><g><text x="281" y="156">Active</text></g><g><text x="281" y="188">object1</text></g><g><text x="281" y="204">object2</text></g><g><text x="281" y="220">..</text></g><g><text x="281" y="284">Active</text></g><g><text x="281" y="300">ChunkIndex</text></g><g><text x="281" y="332">key1</text></g><g><text x="281" y="348">key2</text></g><g><text x="281" y="428">ChunkIndex</text></g><g><text x="281" y="460">chunk_id_1=</text></g><g><text x="281" y="476">chunk_id_2=</text></g><g><text x="281" y="492">..</text></g><g><text x="281" y="508">chunk_id_i=ø</text></g><g><text x="281" y="636">AccessStore</text></g><g><text x="337" y="156">Chunk</text></g><g><text x="441" y="156">On</text></g><g><text x="441" y="284">On</text></g><g><text x="441" y="428">In</text></g><g><text x="441" y="636">On</text></g><g><text x="465" y="156">disk</text></g><g><text x="465" y="284">disk</text></g><g><text x="465" y="428">memory</text></g><g><text x="465" y="636">disk</text></g></svg></div>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../arch/cache-replacement.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                            <a rel="next" href="../arch/internal-api.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../arch/cache-replacement.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                    <a rel="next" href="../arch/internal-api.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+    </body>
+</html>
